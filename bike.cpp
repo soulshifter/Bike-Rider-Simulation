@@ -3,10 +3,10 @@
 #include<string.h>
 #include<stdlib.h>
 #include<math.h>
-#include"SOIL.h"
+// xdpyinfo | grep dimensions to get the dimensions
 #define PI 3.14159
-#define WIN_WIDTH 1920
-#define WIN_HEIGHT 1080
+#define WIN_WIDTH 1366
+#define WIN_HEIGHT 768
 #define BIKE_LENGTH 3.3f
 #define ROD_RADIUS 0.05f
 #define GAS_TANK 0.3f
@@ -32,6 +32,7 @@
 #define HANDLE_LIMIT 30.0f
 #define INC_STEERING 2.0f
 #define INC_SPEED 0.05f
+int light_value = 0;
 
 GLfloat pedalAngle, speed, steering;
 
@@ -100,6 +101,36 @@ GLfloat angleSum(GLfloat a, GLfloat b)
     else return a; 
 }
 
+// void DrawTextXY(double x,double y,double z,double scale,char *s)
+// {
+//     // printf("Call ");
+//     int i;    
+//     glPushMatrix();
+//     glTranslatef(x,y,z);
+//     glScalef(scale,scale,scale);
+//     glColor3f(1, 1, 0);
+//     for (i=0;i < strlen(s);i++)
+//         // glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN,s[i]);
+//         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,s[i]);
+//     glPopMatrix();
+// }
+
+void writeText(float x,float y, float z, char *string) 
+{  
+  
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_LIGHTING);
+  glColor3f(1,1,1);
+  glClear(GL_COLOR_BUFFER_BIT );
+  
+  glRasterPos3f(x, y, z);
+  for(int i = 0; i< (int) strlen(string); i++) 
+  {
+    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
+  }
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_LIGHTING);
+}
 
 void bitmap_output(float x, float y, float z, char *string)
 {
@@ -735,13 +766,34 @@ void drawTyre(void)
 
 void lighting() // FUNCTION FOR LIGHTING
 {
+    // printf("%s\n", "YESS ");
     GLfloat light_directional[]={1.0,1.0,1.0,1.0};
     GLfloat light_positional[]={1.0,1.0,1.0,1.0};
     GLfloat light_diffuse[]={1.0,1.0,1.0};
     GLfloat light_ambient[]={1.0f,1.0f,1.0f,1.0f};
-    glLightfv(GL_LIGHT0,GL_POSITION,light_positional);
-    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT,light_ambient) ;
+    if(light_value == 0){
+        // glDisable(GL_LIGHTING);
+        // glDisable(GL_LIGHT0);
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT,light_ambient) ;
+        glLightfv(GL_LIGHT0,GL_POSITION,light_positional);
+        glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
+    }
+    else if(light_value == 1){
+        // glDisable(GL_LIGHTING);
+        // glDisable(GL_LIGHT0);
+        glLightfv(GL_LIGHT0,GL_POSITION,light_positional);
+    }
+    else if(light_value == 2){
+        // glDisable(GL_LIGHTING);
+        // glDisable(GL_LIGHT0);
+        glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
+    }
+    else if(light_value==3){
+        // glDisable(GL_LIGHTING);
+        // glDisable(GL_LIGHT0);
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT,light_ambient) ;
+        // only ambient
+    }
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 }
@@ -752,14 +804,13 @@ void shading() // FUNCTION FOR SHADING BIKE
     GLfloat mat_spec[]={1.0,1.0,1.0,1.0};
     GLfloat mat_shine[]={100.0};
     glShadeModel(GL_SMOOTH);
+    // You can also choose shade model as GL_FLAT
     glMaterialfv(GL_FRONT,GL_SHININESS,mat_shine);
     glMaterialfv(GL_FRONT,GL_SPECULAR,mat_spec);
     glColorMaterial(GL_FRONT,GL_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DEPTH_TEST);
 }
-
-
 
 GLuint loadimage(const char *fileName)
 {
@@ -781,9 +832,7 @@ GLuint loadimage(const char *fileName)
 	fclose(file);
 	GLuint texture;
 	glGenTextures(1, &texture);				
-	glBindTexture(GL_TEXTURE_2D, texture);	
-
-
+	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);	
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
@@ -794,10 +843,8 @@ GLuint loadimage(const char *fileName)
 
 void init_texture()
 {
-    grass = loadimage("/home/maniac/Desktop/Graphics_Lab/Project/BMP12/grass_1.bmp") ;
+    grass = loadimage("grass_1.bmp") ;
 }
-
-
 
 void init() // INITIALIZING SCENE
 {
@@ -810,10 +857,10 @@ void draw_ground()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,grass);
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-100.0f,-1.0f,100.0f);;
-	glTexCoord2f(100.0f, 0.0f); glVertex3f(-100.0f,-1.0f,-100.0f);;
-	glTexCoord2f(100.0f, 100.0f); glVertex3f(100.0f,-1.0f,-100.0f);
-	glTexCoord2f(0.0f, 100.0f); glVertex3f(100.0f,-1.0f,100.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-100.0f,-1.5f,100.0f);;
+	glTexCoord2f(100.0f, 0.0f); glVertex3f(-100.0f,-1.5f,-100.0f);;
+	glTexCoord2f(100.0f, 100.0f); glVertex3f(100.0f,-1.5f,-100.0f);
+	glTexCoord2f(0.0f, 100.0f); glVertex3f(100.0f,-1.5f,100.0f);
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(5.0);
@@ -825,9 +872,17 @@ void display_bike(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_NORMALIZE);
+    
+    // DrawTextXY(0, 0, 0, 1, "JaiHoyugugcidiufehwdfwoidjoidjeiowjdoiwejfiowejfioewhfohwefihewuifhweiufhurwehfiurwehdfowehfdiwehfoiewhi");
+    // writeText(-1.25, 1.8);
 
-    lighting() ;
-    shading() ;
+    // drawscore(200);
+    char speedString[100];
+    sprintf(speedString, "Speed: %f", speed*10);
+    writeText(-0.23, 2, 1, speedString);
+    
+    lighting();
+    shading();
     glPushMatrix();
     
     glRotatef(angley,1.0f,0.0f,0.0f);
@@ -847,9 +902,8 @@ void display_bike(void)
     glLoadIdentity();
     gluLookAt(camx,camy,camz, camx,1.0,0.0,0.0,1.0,1.0);
     glutSwapBuffers();
+
 }
-
-
 
 void idle(void) // FUNCTION WHEN NO OPERATIONS PERFORMED
 {
@@ -878,7 +932,6 @@ void special(int key,int x,int y) // FUNCTION FOR CAM ZOOMING
     glutPostRedisplay();
 }
 
-
 void reset() // RESETTING SCENE
 {
     glColor3f(0.0f,0.0f,1.0f);
@@ -899,7 +952,7 @@ void reset() // RESETTING SCENE
 }
 
 
-void keyboard(unsigned char key,int x,int y) // KEYBOARD FUNCTIONALITY
+void keyboard(unsigned char key,int x,int y)
 {
     GLfloat r=0.0f,g=0.0f;
     switch(key)
@@ -929,8 +982,10 @@ void keyboard(unsigned char key,int x,int y) // KEYBOARD FUNCTIONALITY
             if (flag == 0)
             {
                 flag = 1 ;
-                system("aplay /home/maniac/Downloads/motorcycle-ride-01.wav&") ;    
-            }    
+                // to kill the idle sound while idle time
+                system("kill `ps | grep 'aplay'|awk '{print $1}'`") ;
+                system("aplay motorcycle-ride-01.wav&") ;
+            }
         break;
         case '-':
             speed -= INC_SPEED;
@@ -938,9 +993,25 @@ void keyboard(unsigned char key,int x,int y) // KEYBOARD FUNCTIONALITY
             {
                 flag = 0 ;
                 system("kill `ps | grep 'aplay'|awk '{print $1}'`") ;
-                system("aplay /home/maniac/Downloads/motorcycle-idle-01.wav&") ; 
-            }    
+                system("aplay motorcycle-idle-01.wav&") ; 
+            }
         break;
+        case 'p':
+            light_value = 0;
+            lighting();
+            break;
+        case 'o':
+            light_value = 1;
+            lighting();
+            break;
+        case 'i':
+            light_value = 2;
+            lighting();
+            break;
+        case 'u':
+            light_value = 3;
+            lighting();
+            break;
         case 'q':
             system("kill `ps | grep 'aplay'|awk '{print $1}'`") ;
             // exit(1);
@@ -956,7 +1027,6 @@ void keyboard(unsigned char key,int x,int y) // KEYBOARD FUNCTIONALITY
     
     glutPostRedisplay();
 }
-
 
 void mouse(int button,int state,int x,int y) // MOUSE FUNCTIONALITY
 {
@@ -1021,7 +1091,6 @@ void motion(int x,int y) // MOTION FUNCTION FOR CURRENT WINDOW WHEN MOUSE KEYS A
     glutPostRedisplay();
 }
 
-
 void reshape(int w,int h)
 {
     glViewport(0,0,(GLsizei)w,(GLsizei)h);
@@ -1033,7 +1102,6 @@ void reshape(int w,int h)
     gluLookAt(camx,camy,camz, 0.0,0.0,0.0, 0.0,1.0,0.0);
 }
 
-
 void welcome_window() // WELCOME WINDOW
 {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -1041,14 +1109,15 @@ void welcome_window() // WELCOME WINDOW
     glColor3f(1.0,1.0,1.0);
     bitmap_output(-1.25,1.8,0.50,"Indian Institute Of Technology");
     bitmap_output(-0.6,1.6,0.50,"Indore");
+    
+    // DrawTextXY(-0.23, 1.5, 0.50, 1, "Jai Hanuman");
+    // writeText(-0.23, 1.5, 0.50, "Jai Hanuman");
     bitmap_output(-0.3,0.70,0.50,"Project On");
     bitmap_output(-0.85,0.50,0.50,"3-D Bike Riding Simulation");
     bitmap_output(-0.6,-1.5,0.50,"PLEASE PRESS S TO START");
     glutSwapBuffers();
     glFlush();
 }
-
-
 
 void operations_window() // OPERATION WINDOW FOR DESCRIPTION OF OPERATIONS TO PERFORM
 {
@@ -1070,7 +1139,6 @@ void operations_window() // OPERATION WINDOW FOR DESCRIPTION OF OPERATIONS TO PE
     glutSwapBuffers();
     glFlush();
 }
-
 
 int main(int argc,char *argv[])
 {
